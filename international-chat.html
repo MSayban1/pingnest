@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>International Chat - Ping Nest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            color: #667eea;
+        }
+
+        .back-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .site-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .online-users {
+            color: #666;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+
+        .chat-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-subtitle {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f8f9ff;
+        }
+
+        .message {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .message:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0.5rem;
+        }
+
+        .country-flag {
+            font-size: 1.2rem;
+        }
+
+        .username {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .message-time {
+            color: #666;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+
+        .message-content {
+            color: #444;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .input-container {
+            padding: 1rem 2rem;
+            background: white;
+            border-top: 1px solid #e1e8ed;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e1e8ed;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .message-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Report Popup */
+        .report-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .report-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .report-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .report-message {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .report-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .report-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .report-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .cancel-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .cancel-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+
+        .no-messages {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .site-name {
+                font-size: 1.5rem;
+            }
+            
+            .chat-container {
+                margin: 0.5rem;
+                border-radius: 15px;
+            }
+            
+            .input-container {
+                padding: 1rem;
+            }
+            
+            .message-input {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <h1 class="site-name">International Chat</h1>
+        </div>
+        <div class="online-users">
+            <div class="online-indicator"></div>
+            <span id="onlineCount">0</span> online
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2 class="chat-title">Global Conversation</h2>
+            <p class="chat-subtitle">Connect with people from around the world</p>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="no-messages" id="noMessages">No messages yet. Start the conversation!</div>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="messageInput" class="message-input" placeholder="Type your message..." maxlength="500">
+            <button id="sendBtn" class="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- Report Popup -->
+    <div id="reportPopup" class="report-popup">
+        <div class="report-content">
+            <h3 class="report-title">Report User</h3>
+            <p class="report-message">Are you sure you want to report this user? They will be removed from the platform.</p>
+            <div class="report-buttons">
+                <button class="report-btn" onclick="confirmReport()">Report</button>
+                <button class="cancel-btn" onclick="closeReportPopup()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAN_Fmk_Y6fNPnnPYlnFHAkttw-SioWzmU",
+            authDomain: "world-chat-f42a9.firebaseapp.com",
+            databaseURL: "https://world-chat-f42a9-default-rtdb.firebaseio.com",
+            projectId: "world-chat-f42a9",
+            storageBucket: "world-chat-f42a9.firebasestorage.app",
+            messagingSenderId: "1086213718761",
+            appId: "1:1086213718761:web:829f1691b2b61cad9ba678",
+            measurementId: "G-GV1HSDP8XW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        let currentUser = null;
+        let reportingUserId = null;
+
+        const countryFlags = {
+            'US': '🇺🇸', 'GB': '🇬🇧', 'CA': '🇨🇦', 'AU': '🇦🇺', 'DE': '🇩🇪',
+            'FR': '🇫🇷', 'IT': '🇮🇹', 'ES': '🇪🇸', 'NL': '🇳🇱', 'BE': '🇧🇪',
+            'CH': '🇨🇭', 'AT': '🇦🇹', 'SE': '🇸🇪', 'NO': '🇳🇴', 'DK': '🇩🇰',
+            'FI': '🇫🇮', 'PL': '🇵🇱', 'CZ': '🇨🇿', 'HU': '🇭🇺', 'SK': '🇸🇰',
+            'SI': '🇸🇮', 'HR': '🇭🇷', 'RS': '🇷🇸', 'BG': '🇧🇬', 'RO': '🇷🇴',
+            'GR': '🇬🇷', 'TR': '🇹🇷', 'RU': '🇷🇺', 'UA': '🇺🇦', 'BY': '🇧🇾',
+            'LT': '🇱🇹', 'LV': '🇱🇻', 'EE': '🇪🇪', 'JP': '🇯🇵', 'KR': '🇰🇷',
+            'CN': '🇨🇳', 'IN': '🇮🇳', 'ID': '🇮🇩', 'TH': '🇹🇭', 'VN': '🇻🇳',
+            'PH': '🇵🇭', 'MY': '🇲🇾', 'SG': '🇸🇬', 'BR': '🇧🇷', 'AR': '🇦🇷',
+            'MX': '🇲🇽', 'CL': '🇨🇱', 'CO': '🇨🇴', 'PE': '🇵🇪', 'VE': '🇻🇪',
+            'ZA': '🇿🇦', 'EG': '🇪🇬', 'NG': '🇳🇬', 'KE': '🇰🇪', 'MA': '🇲🇦',
+            'IL': '🇮🇱', 'SA': '🇸🇦', 'AE': '🇦🇪', 'IR': '🇮🇷', 'IQ': '🇮🇶',
+            'PK': '🇵🇰', 'BD': '🇧🇩', 'LK': '🇱🇰', 'NP': '🇳🇵', 'AF': '🇦🇫'
+        };
+
+        function initializeUser() {
+            const userData = localStorage.getItem('pingNestUser');
+            if (!userData) {
+                window.location.href = 'auth.html';
+                return;
+            }
+            currentUser = JSON.parse(userData);
+            updateUserOnlineStatus();
+        }
+
+        async function updateUserOnlineStatus() {
+            try {
+                await update(ref(database, `users/${currentUser.id}`), {
+                    isOnline: true,
+                    lastSeen: Date.now()
+                });
+            } catch (error) {
+                console.error('Error updating online status:', error);
+            }
+        }
+
+        function trackOnlineUsers() {
+            const usersRef = ref(database, 'users');
+            onValue(usersRef, (snapshot) => {
+                const users = snapshot.val();
+                if (users) {
+                    const onlineUsers = Object.values(users).filter(user => 
+                        user.isOnline && (Date.now() - user.lastSeen < 300000)
+                    );
+                    document.getElementById('onlineCount').textContent = onlineUsers.length;
+                } else {
+                    document.getElementById('onlineCount').textContent = '0';
+                }
+            });
+        }
+
+        function listenToMessages() {
+            const messagesRef = ref(database, 'internationalChat');
+            onValue(messagesRef, (snapshot) => {
+                const messages = snapshot.val();
+                displayMessages(messages);
+            });
+        }
+
+        function displayMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+            const noMessages = document.getElementById('noMessages');
+            
+            if (!messages) {
+                noMessages.style.display = 'block';
+                return;
+            }
+
+            noMessages.style.display = 'none';
+            container.innerHTML = '';
+
+            const messageArray = Object.entries(messages).map(([id, msg]) => ({id, ...msg}));
+            messageArray.sort((a, b) => a.timestamp - b.timestamp);
+
+            messageArray.forEach(message => {
+                const messageEl = createMessageElement(message);
+                container.appendChild(messageEl);
+            });
+
+            // Auto-scroll to bottom to show latest messages
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function createMessageElement(message) {
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            messageEl.setAttribute('data-user-id', message.userId);
+
+            const flag = countryFlags[message.countryCode] || '🌍';
+            const time = new Date(message.timestamp).toLocaleTimeString();
+
+            messageEl.innerHTML = `
+                <div class="message-header">
+                    <span class="country-flag">${flag}</span>
+                    <span class="username">${message.username}</span>
+                    <span class="message-time">${time}</span>
+                </div>
+                <div class="message-content">${message.content}</div>
+            `;
+
+            // Add long press for reporting (only for other users' messages)
+            if (message.userId !== currentUser.id) {
+                let pressTimer;
+                
+                // Mouse events
+                messageEl.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    pressTimer = setTimeout(() => {
+                        showReportPopup(message.userId);
+                    }, 800);
+                });
+
+                messageEl.addEventListener('mouseup', () => {
+                    clearTimeout(pressTimer);
+                });
+
+                messageEl.addEventListener('mouseleave', () => {
+                    clearTimeout(pressTimer);
+                });
+
+                // Touch events for mobile
+                messageEl.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    pressTimer = setTimeout(() => {
+                        showReportPopup(message.userId);
+                    }, 800);
+                });
+
+                messageEl.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    clearTimeout(pressTimer);
+                });
+
+                messageEl.addEventListener('touchcancel', () => {
+                    clearTimeout(pressTimer);
+                });
+            }
+
+            return messageEl;
+        }
+
+        function showReportPopup(userId) {
+            reportingUserId = userId;
+            document.getElementById('reportPopup').style.display = 'flex';
+        }
+
+        window.closeReportPopup = function() {
+            document.getElementById('reportPopup').style.display = 'none';
+            reportingUserId = null;
+        };
+
+        window.confirmReport = async function() {
+            if (!reportingUserId) return;
+
+            try {
+                // Remove user from database
+                await remove(ref(database, `users/${reportingUserId}`));
+                
+                // Remove all messages from this user
+                const messagesSnapshot = await get(ref(database, 'internationalChat'));
+                if (messagesSnapshot.exists()) {
+                    const messages = messagesSnapshot.val();
+                    const updates = {};
+                    
+                    Object.entries(messages).forEach(([messageId, message]) => {
+                        if (message.userId === reportingUserId) {
+                            updates[`internationalChat/${messageId}`] = null;
+                        }
+                    });
+                    
+                    if (Object.keys(updates).length > 0) {
+                        await update(ref(database), updates);
+                    }
+                }
+
+                closeReportPopup();
+                alert('User has been reported and removed.');
+            } catch (error) {
+                console.error('Error reporting user:', error);
+                alert('Error reporting user. Please try again.');
+            }
+        };
+
+        window.sendMessage = async function() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            
+            if (!content) return;
+
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            try {
+                const messageData = {
+                    userId: currentUser.id,
+                    username: currentUser.username,
+                    country: currentUser.country,
+                    countryCode: currentUser.countryCode,
+                    content: content,
+                    timestamp: Date.now()
+                };
+
+                await push(ref(database, 'internationalChat'), messageData);
+                input.value = '';
+                input.focus(); // Keep focus on input for quick typing
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Error sending message. Please try again.');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+            }
+        };
+
+        window.goBack = function() {
+            window.location.href = 'menu.html';
+        };
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeUser();
+            trackOnlineUsers();
+            listenToMessages();
+            
+            // Enter key to send message
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Focus on input when page loads
+            messageInput.focus();
+        });
+
+        // Handle user leaving
+        window.addEventListener('beforeunload', async () => {
+            if (currentUser) {
+                await update(ref(database, `users/${currentUser.id}`), {
+                    isOnline: false,
+                    lastSeen: Date.now()
+                });
+            }
+        });
+    </script>
+</body>
+</html>
